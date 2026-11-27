@@ -3,7 +3,7 @@ import { authService } from "../api/authService";
 
 // pull intial token dafely from localstorage
 const token =localStorage.getItem('token');
-const intialState={
+const initialState={
   user:null,
   token:token || null,
   isAuthenticated:false,
@@ -58,7 +58,7 @@ export const fetchCurrentUser=createAsyncThunk(
 
 const authSlice=createSlice({
   name:'auth',
-  intialState,
+  initialState,
   //reducers create the actions itself
   reducers:{
      logout:(state)=>{
@@ -105,7 +105,7 @@ const authSlice=createSlice({
     })
 
     //fetch current user
-    .addCase(fetchCurrentUser.rejected,(state)=>{
+    .addCase(fetchCurrentUser.pending,(state)=>{
       state.loading=true
     })
     .addCase(fetchCurrentUser.fulfilled,(state,action)=>{

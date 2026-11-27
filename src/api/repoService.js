@@ -1,5 +1,5 @@
-import api from './axios'
-import { ENDPOINTS } from './endpoints'
+import api from './client.js'
+import { ENDPOINTS } from './endpoints.js'
 
 export const repoService={
   getRepositories:async ()=>{

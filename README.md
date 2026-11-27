@@ -72,3 +72,24 @@
 - `ACCURATE_FIX`: Indicates that the finding or suggested fix is accurate.
 - `FALSE_POSITIVE`: Indicates that the finding is incorrect or not a real issue.
 - `getFeedbackStats()`: Fetches model precision percentage and accuracy metrics.
+
+
+# Redux State Management
+
+### 1. `authSlice.js` (Authentication State)
+- Manages the JWT token.
+- Stores the current logged-in user profile.
+- Tracks authentication status using `isAuthenticated`.
+- Manages login, registration, fetching the user profile (`/auth/me`), and logout.
+- Initializes the token directly from `localStorage` so refreshing the browser doesn't log the user out.
+
+### 2. `repoSlice.js` (Repository State)
+- Manages the list of connected repositories.
+- Stores the `activeRepo` (the repository currently selected by the developer).
+- Ensures Codebase Q&A, PR Reviews, and Feedback use the correct repository ID.
+- Manages repository indexing status transitions:
+  - `UNINDEXED` → Repository has not been indexed.
+  - `INDEXING` → Repository indexing is in progress.
+  - `READY` → Repository indexing is complete.
+
+  
