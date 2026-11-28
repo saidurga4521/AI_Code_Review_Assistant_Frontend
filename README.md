@@ -1,95 +1,129 @@
-## Centralized Axios Client
+# 🛡️ AI Code Review & Repository Assistant (Frontend)
 
-**What this file does**
+A modern, responsive, and developer-first Frontend for the **AI Code Review & Repository Intelligence Assistant**, built with **React (Vite SPA)**, **Tailwind CSS**, **Redux Toolkit**, **Axios**, and **React Router v6+**.
 
-- Creates a centralized Axios client for making API requests.
-- Avoids writing `axios.get('http://localhost:8000/...')` directly inside individual UI components.
-- Makes API configuration and token handling easier to maintain.
+---
 
-**Main features**
+## ⚡ Quick Start
 
-1. **Configurable Base URL**
-   - Uses environment variables to configure the backend API URL.
-   - If the API endpoint changes, we only need to update the environment variable.
+### 1. Prerequisites
+- **Node.js** v18+ installed
+- **FastAPI Backend** running at `http://localhost:8000/api/v1`
 
-2. **Request Interceptor**
-   - Automatically gets the JWT token from `localStorage`.
-   - Adds the token to the `Authorization` header of outgoing requests.
-   - Uses the format: `Bearer <token>`.
-   - Avoids manually adding the token to every API request.
+### 2. Configure Environment
+Create or verify your `.env` file in the root directory:
+```env
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+```
 
-3. **Response Interceptor**
-   - Checks API responses for errors.
-   - If the server returns `401 Unauthorized`, it clears the stored session.
-   - Helps handle expired or invalid JWT tokens.
+### 3. Install & Start Development Server
+```bash
+npm install
+npm run dev
+```
+Open **`http://localhost:5173`** in your browser.
 
-**Why centralized Axios client?**
+### 4. Build for Production
+```bash
+npm run build
+```
 
-- Avoids duplicate API configuration.
-- Avoids repeating token-handling logic.
-- Makes API requests consistent across the application.
-- Easier to maintain when backend URLs or authentication logic change.
+---
 
+## 🏗️ Architecture & Core Systems
 
-## API & Services Architecture
+```
+src/
+├── api/                     # Centralized HTTP & Service Layer
+│   ├── client.js            # Axios client with JWT auto-injection & 401 interceptors
+│   ├── endpoints.js         # Single source of truth for all backend API routes
+│   ├── authService.js       # Register, Login, Me endpoints
+│   ├── repoService.js       # Repositories, Indexing, Chunks, Codebase Q&A
+│   ├── reviewService.js     # PR Reviews, Findings, Diffs
+│   ├── actionService.js     # Human-in-the-Loop Pending Actions & Approvals
+│   └── feedbackService.js   # Finding feedback ratings & Model precision stats
+├── components/
+│   ├── common/              # SeverityBadge, StatusBadge, Modal, FeedbackWidget
+│   ├── code/                # Unified DiffViewer with line numbers & copy
+│   └── layout/              # Sidebar, Navbar, AppLayout, ProtectedRoute
+├── pages/
+│   ├── Login.jsx            # Split-screen login with automated JWT session persistence
+│   ├── SignUp.jsx           # Split-screen account registration with validation
+│   ├── Dashboard.jsx        # Connected repos, Quick stats, Connect & Index modals
+│   ├── RepoDetail.jsx       # 4-Tab Workspace (RAG Q&A, PR Audit, Chunks, Telemetry)
+│   └── ActionsInbox.jsx     # Human-in-the-Loop staged patch approval center
+├── store/                   # Redux Toolkit global state
+│   ├── index.js             # Store configuration
+│   ├── authSlice.js         # Session state, JWT token, user profile
+│   └── repoSlice.js         # Repository list, active repo, status transitions
+├── App.jsx                  # React Router DOM layout & route definitions
+├── main.jsx                 # Provider mounting
+└── index.css                # Tailwind directives & custom scrollbars
+```
 
-### 1. `endpoints.js` (Single Source of Truth)
-- Centralizes all backend route paths in one dictionary.
-- Uses dynamic route-builder functions for parameterized URLs.
-- Example: `(repoId) => /repositories/${repoId}/index`.
-- If an API route changes, we only need to update it in one place.
+---
 
-### 2. `client.js` (HTTP Core)
-- Creates a pre-configured Axios instance using `VITE_API_BASE_URL`.
-- **Request Interceptor:** Automatically injects `Authorization: Bearer <token>` from `localStorage`.
-- **Response Interceptor:** Catches `401 Unauthorized`, clears stale tokens, and redirects to `/login`.
+## 🔌 Complete Backend API Mapping
 
-### 3. `authService.js` (Identity & Session)
-- `register()`: Creates a new user account.
-- `login()`: Authenticates credentials and retrieves the JWT access token.
-- `getCurrentUser()`: Fetches the authenticated user's profile using `/auth/me`.
+Base URL: `http://localhost:8000/api/v1`
 
-### 4. `repoService.js` (Repositories & RAG)
-- `getRepositories()`: Lists connected repositories.
-- `createRepository()`: Connects a new repository.
-- `indexRepository()`: Triggers background AST parsing and vector embeddings.
-- `getRepositoryChunks()`: Inspects indexed code chunks and line ranges.
-- `askRepository()`: Submits codebase RAG queries and receives answers with file citations.
+| Category | Method | Endpoint | Description | UI Location |
+|---|---|---|---|---|
+| **Auth** | `POST` | `/auth/register` | Register new user account | `/register` |
+| **Auth** | `POST` | `/auth/login` | Authenticate & retrieve JWT access token | `/login` |
+| **Auth** | `GET` | `/auth/me` | Fetch authenticated user profile | Navbar & session bootstrap |
+| **Repos** | `GET` | `/repositories/` | List repositories owned by current user | Dashboard (`/`) |
+| **Repos** | `POST` | `/repositories/` | Connect/register a new repository | "Connect Repository" Modal |
+| **Repos** | `GET` | `/repositories/{id}` | Fetch repository details | `/repos/:id` |
+| **Repos** | `POST` | `/repositories/{id}/index?repo_path=...` | Trigger AST chunking & vector embeddings | "Trigger Index" Modal & Detail Bar |
+| **Repos** | `GET` | `/repositories/{id}/chunks` | Inspect all indexed AST code chunks | `/repos/:id` (AST Chunks Tab) |
+| **Repos** | `POST` | `/repositories/{id}/ask` | Codebase Q&A with evidence grounding | `/repos/:id` (Codebase Q&A Tab) |
+| **Reviews**| `POST` | `/repositories/{id}/review` | Submit git diff for security & quality audit | `/repos/:id` (PR Review Tab) |
+| **Reviews**| `GET` | `/repositories/{id}/reviews` | Fetch history of PR reviews | `/repos/:id` (Review History) |
+| **HITL** | `GET` | `/actions/pending` | List staged write actions requiring human review | `/actions` (Approval Center) |
+| **HITL** | `POST` | `/actions/{id}/approve` | Approve staged patch with resolution comment | `/actions` (Approve Dialog) |
+| **HITL** | `POST` | `/actions/{id}/reject` | Reject staged patch with rationale | `/actions` (Reject Dialog) |
+| **Feedback**| `POST` | `/findings/{id}/feedback` | Submit `ACCURATE_FIX` vs `FALSE_POSITIVE` rating | Inline on each finding card |
+| **Feedback**| `GET` | `/repositories/{id}/feedback_stats` | Fetch precision score & accuracy metrics | `/repos/:id` (Model Telemetry Tab) |
 
-### 5. `reviewService.js` (PR Reviews & Audits)
-- `submitReview()`: Posts Git diffs for automated security, bug, and test analysis.
-- `getReviewsByRepo()`: Retrieves review history for a repository.
-- `getReviewById()`: Retrieves a specific review and its categorized findings.
+---
 
-### 6. `actionService.js` (Human-in-the-Loop Patch Approvals)
-- `getPendingActions()`: Fetches staged code patches waiting for human approval.
-- `approveAction()`: Approves a proposed code change.
-- `rejectAction()`: Rejects a proposed code change.
-- Submits audit resolution with developer comments.
+## 🧪 Local Testing Workflow
 
-### 7. `feedbackService.js` (Developer Feedback Loop)
-- `submitFeedback()`: Submits thumbs-up or thumbs-down feedback on findings.
-- `ACCURATE_FIX`: Indicates that the finding or suggested fix is accurate.
-- `FALSE_POSITIVE`: Indicates that the finding is incorrect or not a real issue.
-- `getFeedbackStats()`: Fetches model precision percentage and accuracy metrics.
+### Step 1: Create an Account & Log In
+1. Navigate to `http://localhost:5173/register`.
+2. Fill in **Full Name**, **Email**, and **Password** (minimum 6 characters).
+3. Upon registration, you are redirected to `/login`. Sign in with your credentials.
+4. Your JWT access token is stored in `localStorage` and automatically attached by Axios to all future requests.
 
+### Step 2: Connect & Index a Repository
+1. In the **Dashboard**, click **"Connect Repository"**.
+2. Enter:
+   - **Name:** `owner/my-repo`
+   - **Clone URL:** `https://github.com/owner/my-repo`
+   - **Default Branch:** `main`
+3. Click **"Trigger Index"** on your repository card. Provide the local path where your code resides on the backend machine (e.g. `/path/to/folder` or `C:\repos\my-repo`).
+4. Watch the status badge transition from `UNINDEXED` ➔ `INDEXING` ➔ `READY`.
 
-# Redux State Management
+### Step 3: Ask Questions with Codebase RAG
+1. Click on the repository card to open the **Repository Assistant Workspace**.
+2. On the **Codebase Q&A (RAG)** tab, ask questions like:
+   - *"How does our authentication system work?"*
+   - *"Where are the API routes defined?"*
+3. The response will include interactive **grounding evidence badges** displaying the exact file path and line numbers (`L12-L35`). Click any citation to inspect the code evidence!
 
-### 1. `authSlice.js` (Authentication State)
-- Manages the JWT token.
-- Stores the current logged-in user profile.
-- Tracks authentication status using `isAuthenticated`.
-- Manages login, registration, fetching the user profile (`/auth/me`), and logout.
-- Initializes the token directly from `localStorage` so refreshing the browser doesn't log the user out.
+### Step 4: Audit a Pull Request Diff
+1. Switch to the **PR Review & Security Audit** tab.
+2. Click **"Load Sample Vulnerable Diff"** (or paste your own `git diff`).
+3. Click **"Run PR Review & Security Audit"**.
+4. The system displays:
+   - **Risk Level** (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`)
+   - **Categorized Findings** (`SECURITY`, `BUG_RISK`, `MISSING_TESTS`, `ARCHITECTURE`)
+   - **Suggested Remediation Diff** rendered in a unified diff viewer
+   - **Feedback Widget**: Click **Thumbs Up** or **Thumbs Down** to rate finding accuracy and update model precision telemetry.
 
-### 2. `repoSlice.js` (Repository State)
-- Manages the list of connected repositories.
-- Stores the `activeRepo` (the repository currently selected by the developer).
-- Ensures Codebase Q&A, PR Reviews, and Feedback use the correct repository ID.
-- Manages repository indexing status transitions:
-  - `UNINDEXED` → Repository has not been indexed.
-  - `INDEXING` → Repository indexing is in progress.
-  - `READY` → Repository indexing is complete.
-
-  
+### Step 5: Human-in-the-Loop Approval Center
+1. Navigate to **Human Approvals** (`/actions`) in the sidebar.
+2. View all staged actions with status `PENDING_APPROVAL`.
+3. Inspect the proposed diff payload.
+4. Click **"Approve & Apply Patch"** or **"Reject Patch"**, enter your resolution note, and confirm. The patch is resolved with an audit trail!

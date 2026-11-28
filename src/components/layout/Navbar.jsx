@@ -4,8 +4,8 @@ import { GitBranch, LogOut, User } from 'lucide-react';
 
 export default function Navbar() {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
-  const { activeRepo } = useSelector((state) => state.repos);
+  const { user } = useSelector((state) => state.auth || {});
+  const { activeRepo } = useSelector((state) => state.repos || state.repo || {});
 
   return (
     <header className="h-16 border-b border-surface-border bg-surface-dark/60 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-10">
